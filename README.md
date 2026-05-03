@@ -1,41 +1,41 @@
 # Upsun Manager
 
-Dashboard de gestion pour les projets [Upsun](https://upsun.com) (Platform.sh). Surveillez vos environnements, ressources, activités et configurez l'autoscaling depuis une interface unifiée.
+Dashboard de gestion pour les projets [Upsun](https://upsun.com) (Platform.sh). Surveillez vos environnements, ressources, logs, alertes, autoscaling, intégrations CI/CD et bien plus depuis une interface unifiée — disponible en application desktop pour Linux, Windows et macOS.
 
 ![Dashboard](docs/screenshots/readme-dashboard.png)
 
 ## Fonctionnalités
 
-### Dashboard global
+### Pilotage quotidien
 
-Vue d'ensemble de tous vos projets et environnements avec :
-- Statistiques en temps réel (environnements actifs, en pause, inactifs)
-- Consommation agrégée CPU / Mémoire / Disque avec donut charts
-- Graphes de time series sur 10min, 1h, 6h ou 24h
+#### Dashboard global
+Vue d'ensemble multi-projets avec :
+- Statistiques en temps réel (environnements actifs, en pause, inactifs, en cours)
+- Consommation agrégée CPU / Mémoire / Disque avec donut charts et time series
+- Filtres par statut + favoris
 - Détail par projet avec barres de progression
 
-![Dashboard complet](docs/screenshots/readme-dashboard-full.png)
-
-### Gestion des environnements
-
-- Liste des environnements avec statut, type et actions rapides
-- Activation, mise en pause, reprise, redéploiement, suppression
-- Création de branches (nouvel environnement)
+#### Environnements & ressources
+- Liste des environnements avec statut, type et actions rapides (redéploiement, pause, reprise, activation, suppression, branchement)
+- Jauges CPU / mémoire / disque par environnement avec graphes interactifs
 - Polling automatique pendant les opérations
+- Accès rapide aux URLs, SSH et Git de chaque environnement
 
 ![Environnements](docs/screenshots/readme-envs.png)
-
-### Monitoring des ressources
-
-- Jauges CPU, mémoire et disque par environnement
-- Graphes d'utilisation interactifs avec tooltip au survol
-- Détail par service (app, worker, service) avec profil et instances
-- Accès rapide aux URLs, SSH et Git de l'environnement
-
 ![Ressources](docs/screenshots/readme-resources.png)
 
-### Historique des activités
+### Diagnostic & investigation
 
+#### Logs applicatifs
+Streaming des logs récents (app, workers, crons) avec :
+- Détection automatique du niveau (error / warning / notice / info / debug)
+- Filtres par service, niveau et recherche full-text
+- Auto-refresh toggleable
+- Copie / scroll-to-end
+
+![Logs](docs/screenshots/readme-logs.png)
+
+#### Activités
 - Timeline des déploiements, crons, backups, modifications de variables
 - Filtres par environnement et type d'activité
 - Logs détaillés accessibles au clic
@@ -43,35 +43,82 @@ Vue d'ensemble de tous vos projets et environnements avec :
 
 ![Activités](docs/screenshots/readme-activities.png)
 
-### Variables d'environnement
+#### Comparaison d'environnements
+Diff côté-à-côte de deux environnements sur :
+- Variables d'environnement (ajoutées, supprimées, modifiées)
+- Routes
+- Ressources allouées (CPU, mémoire, disque, instances)
 
-- Visualisation et gestion des variables par environnement
-- Création, modification et suppression
-- Support des flags : JSON, sensible, visible au build/runtime
+![Comparer](docs/screenshots/readme-compare.png)
+
+#### Alertes & notifications
+- Canaux configurables : Slack, Discord, webhook générique, email
+- Règles d'alerte sur métriques (CPU, mémoire, disque) avec seuils + durées
+- Historique des notifications déclenchées
+
+![Alertes](docs/screenshots/readme-alerts.png)
+
+### Configuration
+
+#### Variables d'environnement
+- Visualisation et gestion par environnement
+- Création, modification, suppression
+- Support des flags : JSON, sensible, build/runtime
 
 ![Variables](docs/screenshots/readme-variables.png)
 
-### Sauvegardes
-
-- Liste des backups avec statut et date
-- Création de nouvelles sauvegardes
-- Restauration avec confirmation
-
-### Domaines
-
+#### Domaines & certificats SSL
 - Gestion des domaines par environnement
-- Ajout et suppression de domaines
-- Indicateur SSL
+- Indicateurs d'expiration des certificats avec niveau d'urgence
 
-### Autoscaling
+![Domaines](docs/screenshots/readme-domains.png)
 
-- Moteur d'autoscaling intégré (pas d'API Upsun native)
+#### Crons
+- Historique des exécutions avec stats (taux de succès, durée, dernier run)
+- Liens vers les logs détaillés
+
+![Crons](docs/screenshots/readme-crons.png)
+
+#### Sauvegardes
+- Liste des backups avec statut et date
+- Création manuelle, restauration avec confirmation
+
+![Sauvegardes](docs/screenshots/readme-backups.png)
+
+#### Autoscaling
+Moteur d'autoscaling intégré (Upsun n'a pas d'API native) :
 - Configuration par service : CPU, mémoire, disque
-- Presets rapides : Conservateur, Equilibre, Agressif
-- Analyse intelligente avec recommandations basées sur 24h de données
+- Presets rapides : Conservateur, Équilibré, Agressif
+- Recommandations basées sur 24h de données
 - Historique des actions de scaling
 
 ![Autoscaling](docs/screenshots/readme-autoscaling.png)
+
+### Administration projet
+
+#### Intégrations CI/CD
+- GitHub, GitLab, Bitbucket, webhooks génériques, Slack, email santé
+- Création, validation et suppression sans quitter le dashboard
+
+![Intégrations](docs/screenshots/readme-integrations.png)
+
+#### Équipe & accès
+- Liste des membres avec rôles (Admin / Contributor / Viewer)
+- Invitation par email + suppression d'accès
+
+![Équipe](docs/screenshots/readme-team.png)
+
+#### Apparence par organisation
+8 palettes d'accent paramétrables au niveau organisation, persistées et synchronisées entre tous les utilisateurs. Le thème survit au toggle clair/sombre.
+
+![Apparence](docs/screenshots/readme-appearance.png)
+
+### Productivité
+
+- **Palette de commandes ⌘K** : recherche fuzzy sur tous les panels et environnements du projet courant
+- **Pattern signature génératif** : chaque organisation reçoit un motif unique en arrière-plan (dérivé de son ID)
+- **Auto-update** : les nouvelles versions sont téléchargées automatiquement en arrière-plan
+- **Onboarding intelligent** : guide pas-à-pas quand aucun projet n'est encore configuré
 
 ## Stack technique
 
@@ -79,12 +126,12 @@ Vue d'ensemble de tous vos projets et environnements avec :
 |-----------|-------------|
 | Frontend | Nuxt 3.21 (SPA) |
 | State management | Pinia (composition API) |
-| Styling | Tailwind CSS + theme dark Graphite |
+| Styling | Tailwind CSS + thème dark Graphite |
 | Fonts | Manrope (sans) + JetBrains Mono (mono) |
 | Backend | Nitro server routes (proxy API Upsun) |
 | Auth | OAuth2 token exchange via Platform.sh |
-| Desktop | Electron (optionnel) |
-| Build desktop | Docker + Makefile |
+| Desktop | Electron 41 + electron-builder + electron-updater |
+| CI/CD | GitHub Actions (Linux + Windows + macOS) |
 
 ## Téléchargement
 
@@ -106,7 +153,7 @@ Les binaires pré-compilés sont disponibles sur la page [Releases](https://gith
 
 ### macOS
 
-1. Télécharger `Upsun-Manager-*.dmg` et glisser l'app dans le dossier Applications.
+1. Télécharger `Upsun-Manager-*-arm64.dmg` (Apple Silicon) et glisser l'app dans Applications.
 2. Au premier lancement : **clic-droit sur l'icône > Ouvrir** (au lieu d'un double-clic).
 3. Confirmer dans la boîte de dialogue Gatekeeper.
 4. L'app n'est pas notarisée Apple — le clic-droit est nécessaire uniquement la première fois.
@@ -123,20 +170,22 @@ npm install
 
 ## Configuration
 
-Creer un fichier `.env` a la racine :
+Créer un fichier `.env` à la racine :
 
 ```env
 NUXT_UPSUN_API_TOKEN=your-upsun-api-token
 ```
 
-Le token API Upsun se genere depuis [console.upsun.com](https://console.upsun.com) > Account Settings > API Tokens.
+Le token API Upsun se génère depuis [console.upsun.com](https://console.upsun.com) > Account Settings > API Tokens.
+
+En mode Electron, le token est demandé au premier démarrage via une interface dédiée et stocké de manière chiffrée via Electron `safeStorage`.
 
 ## Utilisation
 
 ### Mode web
 
 ```bash
-# Developpement
+# Développement
 npm run build && npx nuxt preview --port 3002
 
 # Production
@@ -150,10 +199,10 @@ node .output/server/index.mjs
 # Dev
 npm run electron:dev
 
-# Package (repertoire)
+# Package (répertoire)
 npm run electron:pack
 
-# Distribution (installeur)
+# Distribution (installeur local)
 npm run electron:dist
 ```
 
@@ -188,43 +237,60 @@ Les artifacts sont publiés automatiquement sur la page Releases du repo.
 
 ```
 pages/                          # Dashboard + page projet
-components/                     # ~35 composants Vue
-  LoadingState.vue              # Etats partagés
-  EmptyState.vue
-  ErrorState.vue
-  AreaChart.vue                 # Graphes SVG interactifs
-  DonutChart.vue                # Jauges circulaires
+components/                     # ~50 composants Vue
+  ProjectNav.vue                # Nav 2 niveaux (Operate / Observe / Configure)
+  ProjectVitalSigns.vue         # Barre de stats compacte
+  ProjectSettingsMenu.vue       # Menu engrenage projet
+  CommandPalette.vue            # Palette ⌘K
+  OrgPattern.vue                # Pattern signature génératif
+  OrgThemeSettings.vue          # Picker de couleurs par organisation
+  EmptyState.vue / LoadingState.vue / ErrorState.vue
   ...
-composables/                    # Logique reutilisable
-  useClipboard.ts
-  useEnvironmentSelection.ts
-  useToast.ts
-  useElectron.ts
-stores/                         # 9 Pinia stores
-  dashboard.ts                  # Agregation multi-projets
-  metrics.ts                    # Metriques par environnement
-  environments.ts               # CRUD + polling
-  autoscaling.ts                # Config + recommandations
+composables/
+  useCommandPalette.ts
+  useOrgPattern.ts              # Génération déterministe par hash d'org
+  useOrgTheme.ts                # Application des CSS variables d'accent
+  useProjectSections.ts         # Définition de la nav projet
+  useFavorites.ts
   ...
-utils/                          # Fonctions utilitaires
+stores/                         # 15 Pinia stores (composition API)
+  dashboard.ts                  # Agrégation multi-projets
+  metrics.ts / environments.ts / autoscaling.ts
+  logs.ts / notifications.ts / integrations.ts / access.ts
+  compare.ts / orgThemes.ts
+  ...
+types/                          # Domaine fortement typé
+  notification.ts               # Tagged unions par type de canal
+  integration.ts                # Tagged unions par type d'intégration
+  log.ts / orgTheme.ts / access.ts
+  ...
+utils/
   format.ts                     # formatBytes, formatCpu, formatPercent
-  date.ts                       # formatDate, formatRelativeTime
-  error.ts                      # extractErrorMessage
-  metrics.ts                    # parseMetricsResponse, summarizeServices
+  date.ts / error.ts / metrics.ts
+  diff.ts / diff-formatters.ts  # Comparaison d'environnements
 server/
-  api/                          # ~31 routes Nitro
+  api/                          # ~50 routes Nitro
+    notifications/ integrations/ access/ org-themes/ logs/
+    environments/compare/ ...
   utils/
     upsun-auth.ts               # OAuth2 token exchange
     upsun-client.ts             # Client HTTP avec retry 401
-    env-action-handler.ts       # Factory pour les actions env
-    autoscaling-engine.ts       # Moteur d'evaluation periodique
+    upsun-metrics.ts            # Service typé d'extraction de métriques
+    log-parser.ts               # Parser de logs Upsun
+    notification-engine.ts      # Évaluation périodique des alertes (60s)
+    autoscaling-engine.ts       # Moteur d'autoscaling (60s)
+    storage-keys.ts             # Clés Nitro storage centralisées
+    validation.ts               # Validation des inputs API
   plugins/
-    autoscaling.ts              # Demarrage automatique du moteur
-electron/                       # Process Electron (optionnel)
-  main.ts
-  preload.ts
-  token-store.ts                # Stockage chiffre via safeStorage
-  nitro-server.ts               # Serveur Nitro embarque
+    autoscaling.ts / notifications.ts
+electron/                       # Process Electron
+  main.ts                       # Lifecycle + IPC + auto-updater
+  preload.ts                    # Pont vers le renderer
+  token-store.ts                # Stockage chiffré via safeStorage
+  nitro-server.ts               # Serveur Nitro embarqué
+.github/workflows/
+  release.yml                   # Build + publish 3 OS sur tag v*.*.*
+  build-pr.yml                  # Validation PR (Linux only)
 ```
 
 ## Licence
