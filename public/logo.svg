@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="#2563eb"/>
+  <!-- Server bars -->
+  <rect x="148" y="310" width="216" height="28" rx="6" fill="#ffffff" fill-opacity="0.25"/>
+  <rect x="148" y="352" width="216" height="28" rx="6" fill="#ffffff" fill-opacity="0.15"/>
+  <rect x="148" y="394" width="216" height="28" rx="6" fill="#ffffff" fill-opacity="0.10"/>
+  <!-- Upward arrow -->
+  <path d="M256 120 L340 230 L292 230 L292 300 L220 300 L220 230 L172 230 Z" fill="#ffffff"/>
+  <!-- Status dots on bars -->
+  <circle cx="176" cy="324" r="6" fill="#93c5fd"/>
+  <circle cx="200" cy="366" r="6" fill="#93c5fd" fill-opacity="0.7"/>
+  <circle cx="188" cy="408" r="6" fill="#93c5fd" fill-opacity="0.4"/>
+</svg>

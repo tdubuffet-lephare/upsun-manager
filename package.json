@@ -1,0 +1,35 @@
+{
+  "name": "upsun-manager",
+  "version": "1.0.0",
+  "description": "Dashboard de gestion Upsun",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "electron:build": "ELECTRON=true nuxt build && npx tsc -p electron/tsconfig.json",
+    "electron:dev": "npm run electron:build && npx electron .",
+    "electron:pack": "npm run electron:build && npx electron-builder --dir",
+    "electron:dist": "npm run electron:build && npx electron-builder"
+  },
+  "homepage": "https://github.com/tdubuffet-lephare/upsun-manager",
+  "author": {
+    "name": "Thibault Dubuffet",
+    "email": "thibault.dubuffet@lephare.com"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@pinia/nuxt": "^0.11.3",
+    "nuxt": "^3.21.4",
+    "pinia": "^3.0.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
+    "typescript": "^6.0.3"
+  }
+}
