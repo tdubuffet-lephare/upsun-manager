@@ -113,12 +113,24 @@ Moteur d'autoscaling intégré (Upsun n'a pas d'API native) :
 
 ![Apparence](docs/screenshots/readme-appearance.png)
 
+### Premier démarrage
+
+#### Saisie du token API
+Au tout premier lancement, l'app demande votre token API Upsun via une interface dédiée. Le token est ensuite chiffré et stocké localement via Electron `safeStorage` — il ne quitte jamais votre machine.
+
+![Configuration du token](docs/screenshots/readme-setup.png)
+
+#### Tableau de bord vide
+Si aucun projet n'est encore visible (token configuré mais aucun projet créé sur Upsun), un guide pas-à-pas s'affiche pour vous orienter vers les premières étapes.
+
+![Onboarding tableau de bord](docs/screenshots/readme-onboarding.png)
+
 ### Productivité
 
 - **Palette de commandes ⌘K** : recherche fuzzy sur tous les panels et environnements du projet courant
 - **Pattern signature génératif** : chaque organisation reçoit un motif unique en arrière-plan (dérivé de son ID)
 - **Auto-update** : les nouvelles versions sont téléchargées automatiquement en arrière-plan
-- **Onboarding intelligent** : guide pas-à-pas quand aucun projet n'est encore configuré
+- **Skip-link & focus-visible** : navigation clavier soignée, conforme aux bonnes pratiques d'accessibilité
 
 ## Stack technique
 
