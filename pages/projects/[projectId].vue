@@ -1,14 +1,32 @@
 <template>
-  <div class="px-6 lg:px-8 py-8 max-w-[1400px]">
+  <div class="relative px-6 lg:px-8 py-7 w-full">
+    <!-- Subtle org-specific pattern watermark (top area only) -->
+    <div
+      v-if="orgId"
+      class="absolute top-0 left-0 right-0 h-[180px] overflow-hidden pointer-events-none"
+      aria-hidden="true"
+    >
+      <div class="relative w-full h-full text-accent">
+        <OrgPattern :org-id="orgId" :opacity="0.05" />
+        <!-- Fade out gradient at bottom -->
+        <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-bg" />
+      </div>
+    </div>
+
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6 animate-in">
-      <div>
-        <h1 class="text-xl font-semibold text-text/90 tracking-tight">{{ projectTitle }}</h1>
-        <span class="font-mono text-[11px] text-dim">{{ projectId }}</span>
+    <div class="relative flex items-center justify-between mb-4 animate-in">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <h1 class="text-xl font-semibold text-text/90 tracking-tight truncate">
+          {{ projectTitle }}
+        </h1>
+        <ProjectSettingsMenu
+          :active-key="isSettingsActive ? activeTab : undefined"
+          @select="setTab"
+        />
       </div>
       <button
         v-if="activeTab === 'environments'"
-        class="btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-[13px] animate-in delay-1"
+        class="btn-primary inline-flex items-center gap-2 px-4 py-2 text-[13px] animate-in delay-1"
         @click="showCreate = true"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -33,52 +51,18 @@
     </div>
 
     <template v-else>
-      <!-- Stats -->
-      <div class="grid grid-cols-4 gap-3 mb-6 animate-in delay-1">
-        <div class="card p-3.5 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-text/[0.04] flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <div>
-            <div class="text-lg font-semibold text-text/90 tabular-nums">{{ envsStore.environments.length }}</div>
-            <div class="font-mono text-[9px] text-dim uppercase tracking-wider">total</div>
-          </div>
-        </div>
-        <div class="card p-3.5 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-success/8 flex items-center justify-center">
-            <div class="w-2 h-2 rounded-full bg-success/80" />
-          </div>
-          <div>
-            <div class="text-lg font-semibold text-success tabular-nums">{{ activeCount }}</div>
-            <div class="font-mono text-[9px] text-dim uppercase tracking-wider">actifs</div>
-          </div>
-        </div>
-        <div class="card p-3.5 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-warning/8 flex items-center justify-center">
-            <div class="w-2 h-2 rounded-full bg-warning/80" />
-          </div>
-          <div>
-            <div class="text-lg font-semibold text-warning tabular-nums">{{ pausedCount }}</div>
-            <div class="font-mono text-[9px] text-dim uppercase tracking-wider">en pause</div>
-          </div>
-        </div>
-        <div class="card p-3.5 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-text/[0.03] flex items-center justify-center">
-            <div class="w-2 h-2 rounded-full bg-dim/80" />
-          </div>
-          <div>
-            <div class="text-lg font-semibold text-dim tabular-nums">{{ inactiveCount }}</div>
-            <div class="font-mono text-[9px] text-dim uppercase tracking-wider">inactifs</div>
-          </div>
-        </div>
+      <!-- Vital signs (replaces stat cards) -->
+      <div class="relative">
+        <ProjectVitalSigns
+          :environments="envsStore.environments"
+          :region="projectRegion"
+          :project-id="projectId"
+        />
       </div>
 
-      <!-- Tabs -->
-      <ProjectTabs
+      <!-- Navigation -->
+      <ProjectNav
         :active-tab="activeTab"
-        :tabs="tabs"
         @update:active-tab="setTab"
       />
 
@@ -94,6 +78,10 @@
           @deactivate="envId => envsStore.deactivateEnvironment(projectId, envId)"
           @delete="envId => envsStore.deleteEnvironment(projectId, envId)"
         />
+      </div>
+
+      <div v-else-if="activeTab === 'logs'">
+        <LogPanel :project-id="projectId" :environments="envsStore.environments" />
       </div>
 
       <div v-else-if="activeTab === 'activities'">
@@ -119,6 +107,30 @@
       <div v-else-if="activeTab === 'autoscaling'">
         <AutoscalingPanel :project-id="projectId" :environments="envsStore.environments" />
       </div>
+
+      <div v-else-if="activeTab === 'crons'">
+        <CronPanel :project-id="projectId" :environments="envsStore.environments" />
+      </div>
+
+      <div v-else-if="activeTab === 'alerts'">
+        <NotificationPanel :project-id="projectId" :environments="envsStore.environments" />
+      </div>
+
+      <div v-else-if="activeTab === 'integrations'">
+        <IntegrationPanel :project-id="projectId" />
+      </div>
+
+      <div v-else-if="activeTab === 'compare'">
+        <EnvironmentDiffPanel :project-id="projectId" :environments="envsStore.environments" />
+      </div>
+
+      <div v-else-if="activeTab === 'team'">
+        <TeamPanel :project-id="projectId" />
+      </div>
+
+      <div v-else-if="activeTab === 'appearance' && orgId">
+        <OrgThemeSettings :organization-id="orgId" :organization-label="orgLabel" />
+      </div>
     </template>
 
     <CreateEnvironmentModal
@@ -127,11 +139,20 @@
       :is-creating="envsStore.actionLoading === 'creating'"
       @create="onCreate"
     />
+
+    <!-- Command palette (global Cmd+K) -->
+    <CommandPalette
+      :environments="envsStore.environments"
+      :project-id="projectId"
+      @navigate="setTab"
+      @select-env="onSelectEnvFromPalette"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { EnvironmentType } from '~/types/environment'
+import { useProjectSections } from '~/composables/useProjectSections'
 
 const route = useRoute()
 const router = useRouter()
@@ -139,27 +160,30 @@ const projectId = route.params.projectId as string
 const envsStore = useEnvironmentsStore()
 const activitiesStore = useActivitiesStore()
 const projectsStore = useProjectsStore()
+const orgsStore = useOrganizationsStore()
+const cmdk = useCommandPalette()
+const orgTheme = useOrgTheme()
+const { isValidTab, isSettingsTab } = useProjectSections()
 const showCreate = ref(false)
 
-const projectTitle = computed(() => {
-  const project = projectsStore.allProjects.find(p => p.id === projectId)
-  return project?.title || 'Projet'
-})
+const project = computed(() =>
+  projectsStore.allProjects.find(p => p.id === projectId),
+)
 
-const tabs = [
-  { key: 'environments', label: 'Environnements', icon: 'layers' },
-  { key: 'resources', label: 'Ressources', icon: 'gauge' },
-  { key: 'activities', label: 'Activités', icon: 'activity' },
-  { key: 'variables', label: 'Variables', icon: 'code' },
-  { key: 'backups', label: 'Sauvegardes', icon: 'shield' },
-  { key: 'domains', label: 'Domaines', icon: 'globe' },
-  { key: 'autoscaling', label: 'Autoscaling', icon: 'scale' },
-]
+const projectTitle = computed(() => project.value?.title || 'Projet')
+const projectRegion = computed(() => project.value?.region)
+const orgId = computed(() => project.value?.organization_id || '')
+const orgLabel = computed(() => {
+  const org = orgsStore.organizations.find(o => o.id === orgId.value)
+  return org?.label || org?.name || ''
+})
 
 const activeTab = computed(() => {
   const tab = route.query.tab as string
-  return tabs.some(t => t.key === tab) ? tab : 'environments'
+  return isValidTab(tab) ? tab : 'environments'
 })
+
+const isSettingsActive = computed(() => isSettingsTab(activeTab.value))
 
 function setTab(tab: string) {
   router.replace({ query: { ...route.query, tab } })
@@ -168,13 +192,13 @@ function setTab(tab: string) {
   }
 }
 
+function onSelectEnvFromPalette(envId: string) {
+  router.replace({ query: { ...route.query, tab: 'environments', env: envId } })
+}
+
 const activeEnvironments = computed(() =>
   envsStore.environments.filter(e => e.status === 'active'),
 )
-
-const activeCount = computed(() => envsStore.environments.filter(e => e.status === 'active').length)
-const pausedCount = computed(() => envsStore.environments.filter(e => e.status === 'paused').length)
-const inactiveCount = computed(() => envsStore.environments.filter(e => e.status === 'inactive').length)
 
 async function onCreate(data: { parentId: string; title: string; name: string; type: EnvironmentType; cloneParent: boolean }) {
   await envsStore.branchEnvironment(projectId, data.parentId, {
@@ -186,14 +210,32 @@ async function onCreate(data: { parentId: string; title: string; name: string; t
   showCreate.value = false
 }
 
+function handleKeydown(e: KeyboardEvent) {
+  const isMod = e.metaKey || e.ctrlKey
+  if (isMod && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    cmdk.toggle()
+  }
+}
+
+// Activate the org theme as soon as we know which org this project belongs to
+watch(orgId, (id) => {
+  if (id) orgTheme.activate(id)
+}, { immediate: true })
+
 onMounted(() => {
   envsStore.fetchEnvironments(projectId)
   if (activeTab.value === 'activities') {
     activitiesStore.fetchProjectActivities(projectId)
   }
+  if (!orgsStore.organizations.length) {
+    orgsStore.fetchOrganizations()
+  }
+  document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   envsStore.stopPolling()
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>

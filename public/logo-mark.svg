@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="m-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <linearGradient id="m-u" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <radialGradient id="m-dot" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </radialGradient>
+  </defs>
+  <rect x="32" y="32" width="448" height="448" rx="120" fill="url(#m-bg)"/>
+  <path d="M 148 128 L 148 296 Q 148 388 256 388 Q 364 388 364 296 L 364 128 L 304 128 L 304 296 Q 304 324 256 324 Q 208 324 208 296 L 208 128 Z" fill="url(#m-u)"/>
+  <circle cx="364" cy="128" r="28" fill="url(#m-dot)">
+    <animate attributeName="r" values="28;32;28" dur="2.4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="1;0.85;1" dur="2.4s" repeatCount="indefinite"/>
+  </circle>
+</svg>

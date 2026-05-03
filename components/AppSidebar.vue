@@ -1,21 +1,23 @@
 <template>
   <aside
-    class="fixed top-0 left-0 h-screen bg-surface border-r border-border z-50 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+    class="fixed top-0 left-0 h-screen bg-surface border-r border-border z-50 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] max-md:!w-[56px]"
     :class="collapsed ? 'w-[56px]' : 'w-[240px]'"
+    aria-label="Navigation principale"
   >
     <!-- Header -->
     <div class="h-[52px] flex items-center border-b border-border shrink-0" :class="collapsed ? 'px-0 justify-center' : 'px-3.5'">
-      <NuxtLink to="/" class="flex items-center gap-2.5 min-w-0">
-        <img src="/logo.svg" alt="Upsun Manager" class="w-7 h-7 rounded-lg shrink-0" />
+      <NuxtLink to="/" class="flex items-center gap-2.5 min-w-0" aria-label="Tableau de bord">
+        <img src="/logo.svg" alt="" class="w-7 h-7 rounded-lg shrink-0" />
         <Transition name="fade-text">
-          <span v-if="!collapsed" class="text-[14px] font-semibold tracking-tight text-text/90 whitespace-nowrap">
+          <span v-if="!collapsed" class="text-[14px] font-semibold tracking-tight text-text/90 whitespace-nowrap max-md:hidden">
             Upsun <span class="text-accent font-normal">Manager</span>
           </span>
         </Transition>
       </NuxtLink>
       <button
         v-if="!collapsed"
-        class="ml-auto w-6 h-6 rounded-md flex items-center justify-center text-dim hover:text-muted hover:bg-raised transition-colors"
+        class="ml-auto w-6 h-6 rounded-md flex items-center justify-center text-dim hover:text-muted hover:bg-raised transition-colors max-md:hidden"
+        :aria-label="collapsed ? 'Déplier la barre latérale' : 'Replier la barre latérale'"
         @click="toggle"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -51,29 +53,45 @@
         <div v-if="!collapsed && orgsStore.organizations.length > 1" class="px-2 mt-3 mb-1.5">
           <span class="font-mono text-[8px] text-dim/50 uppercase tracking-wider">{{ org.label || org.name }}</span>
         </div>
-        <NuxtLink
-          v-for="project in projectsStore.getProjects(org.id)"
+        <div
+          v-for="project in sortedProjects(org.id)"
           :key="project.id"
-          :to="`/projects/${project.id}`"
-          class="sidebar-link group/proj"
-          :class="[currentProjectId === project.id ? 'sidebar-link-active' : '', collapsed ? 'justify-center px-0' : '']"
-          :title="collapsed ? project.title : undefined"
+          class="flex items-center"
         >
-          <div class="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors"
-               :class="currentProjectId === project.id ? 'bg-accent/15 text-accent' : 'bg-raised border border-border text-muted group-hover/proj:border-border-hover'">
-            <span class="text-[9px] font-bold leading-none">{{ project.title.charAt(0).toUpperCase() }}</span>
-          </div>
-          <template v-if="!collapsed">
-            <span class="text-[13px] truncate min-w-0">{{ project.title }}</span>
-            <span
-              v-if="dashboardStore.loaded && dashboardStore.getProjectEnvs(project.id).length"
-              class="ml-auto font-mono text-[9px] tabular-nums shrink-0"
-              :class="currentProjectId === project.id ? 'text-accent/60' : 'text-dim'"
-            >
-              {{ activeEnvCount(project.id) }}<span class="text-dim/40">/</span>{{ dashboardStore.getProjectEnvs(project.id).length }}
-            </span>
-          </template>
-        </NuxtLink>
+          <NuxtLink
+            :to="`/projects/${project.id}`"
+            class="sidebar-link group/proj flex-1 min-w-0"
+            :class="[currentProjectId === project.id ? 'sidebar-link-active' : '', collapsed ? 'justify-center px-0' : '']"
+            :title="collapsed ? project.title : undefined"
+          >
+            <div class="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors"
+                 :class="currentProjectId === project.id ? 'bg-accent/15 text-accent' : 'bg-raised border border-border text-muted group-hover/proj:border-border-hover'">
+              <span class="text-[9px] font-bold leading-none">{{ project.title.charAt(0).toUpperCase() }}</span>
+            </div>
+            <template v-if="!collapsed">
+              <span class="text-[13px] truncate min-w-0">{{ project.title }}</span>
+              <span
+                v-if="dashboardStore.loaded && dashboardStore.getProjectEnvs(project.id).length"
+                class="ml-auto font-mono text-[9px] tabular-nums shrink-0"
+                :class="currentProjectId === project.id ? 'text-accent/60' : 'text-dim'"
+              >
+                {{ activeEnvCount(project.id) }}<span class="text-dim/40">/</span>{{ dashboardStore.getProjectEnvs(project.id).length }}
+              </span>
+            </template>
+          </NuxtLink>
+          <button
+            v-if="!collapsed"
+            class="shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-colors hover:bg-raised max-md:hidden"
+            :title="isFavorite(project.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+            :aria-label="isFavorite(project.id) ? `Retirer ${project.title} des favoris` : `Ajouter ${project.title} aux favoris`"
+            :aria-pressed="isFavorite(project.id)"
+            @click.stop.prevent="toggleFavorite(project.id)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" :class="isFavorite(project.id) ? 'text-warning' : 'text-dim/30'" :fill="isFavorite(project.id) ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          </button>
+        </div>
       </template>
 
       <!-- Loading projects -->
@@ -83,10 +101,11 @@
       </div>
     </nav>
 
-    <!-- Collapse button (when collapsed) -->
-    <div v-if="collapsed" class="px-1.5 pb-1">
+    <!-- Collapse button (when collapsed) — hidden on mobile (forced collapsed) -->
+    <div v-if="collapsed" class="px-1.5 pb-1 max-md:hidden">
       <button
         class="w-full flex items-center justify-center py-2 rounded-md text-dim hover:text-muted hover:bg-raised transition-colors"
+        aria-label="Déplier la barre latérale"
         @click="toggle"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -102,6 +121,7 @@
         class="sidebar-link w-full"
         :class="collapsed ? 'justify-center px-0' : ''"
         :title="collapsed ? (isDark ? 'Mode clair' : 'Mode sombre') : undefined"
+        :aria-label="isDark ? 'Activer le mode clair' : 'Activer le mode sombre'"
         @click="toggleTheme"
       >
         <!-- Sun (shown in dark mode → click for light) -->
@@ -130,6 +150,16 @@ const projectsStore = useProjectsStore()
 const dashboardStore = useDashboardStore()
 const { collapsed, toggle } = useSidebar()
 const { isDark, toggle: toggleTheme } = useTheme()
+const { isFavorite, toggleFavorite } = useFavorites()
+
+function sortedProjects(orgId: string) {
+  const projects = projectsStore.getProjects(orgId)
+  return [...projects].sort((a, b) => {
+    const aFav = isFavorite(a.id) ? 0 : 1
+    const bFav = isFavorite(b.id) ? 0 : 1
+    return aFav - bFav
+  })
+}
 
 const isDashboard = computed(() => route.path === '/')
 

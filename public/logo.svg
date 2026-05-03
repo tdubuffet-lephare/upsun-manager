@@ -1,14 +1,55 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background -->
-  <rect x="32" y="32" width="448" height="448" rx="96" fill="#2563eb"/>
-  <!-- Server bars -->
-  <rect x="148" y="310" width="216" height="28" rx="6" fill="#ffffff" fill-opacity="0.25"/>
-  <rect x="148" y="352" width="216" height="28" rx="6" fill="#ffffff" fill-opacity="0.15"/>
-  <rect x="148" y="394" width="216" height="28" rx="6" fill="#ffffff" fill-opacity="0.10"/>
-  <!-- Upward arrow -->
-  <path d="M256 120 L340 230 L292 230 L292 300 L220 300 L220 230 L172 230 Z" fill="#ffffff"/>
-  <!-- Status dots on bars -->
-  <circle cx="176" cy="324" r="6" fill="#93c5fd"/>
-  <circle cx="200" cy="366" r="6" fill="#93c5fd" fill-opacity="0.7"/>
-  <circle cx="188" cy="408" r="6" fill="#93c5fd" fill-opacity="0.4"/>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="55%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <linearGradient id="u" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <radialGradient id="hl" cx="100%" cy="0%" r="85%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="dot" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background tile with depth gradient -->
+  <rect x="32" y="32" width="448" height="448" rx="120" fill="url(#bg)"/>
+
+  <!-- Top-right glow -->
+  <rect x="32" y="32" width="448" height="448" rx="120" fill="url(#hl)"/>
+
+  <!-- Inner refinement border -->
+  <rect x="42" y="42" width="428" height="428" rx="112" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1.5"/>
+
+  <!-- Stacked layer hints (3 ghost rectangles, suggesting environments) -->
+  <rect x="148" y="368" width="216" height="14" rx="7" fill="#ffffff" fill-opacity="0.06"/>
+  <rect x="158" y="394" width="196" height="14" rx="7" fill="#ffffff" fill-opacity="0.04"/>
+
+  <!-- Custom U letterform -->
+  <path d="
+    M 148 128
+    L 148 296
+    Q 148 388 256 388
+    Q 364 388 364 296
+    L 364 128
+    L 304 128
+    L 304 296
+    Q 304 324 256 324
+    Q 208 324 208 296
+    L 208 128
+    Z
+  " fill="url(#u)"/>
+
+  <!-- Signature pulse dot — top-right corner of U -->
+  <circle cx="364" cy="128" r="28" fill="url(#dot)"/>
+  <!-- Specular highlight on dot -->
+  <ellipse cx="354" cy="118" rx="9" ry="6" fill="#ffffff" fill-opacity="0.7"/>
 </svg>

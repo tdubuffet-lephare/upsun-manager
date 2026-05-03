@@ -30,6 +30,17 @@ electron-dev: electron-build
 electron-pack: electron-build
 	npx electron-builder --dir
 
+# ── Web (Docker) ─────────────────────────────
+
+.PHONY: docker-web docker-preview
+
+docker-web:
+	docker build -f Dockerfile.build --target web -t $(IMAGE):web .
+
+docker-preview: docker-web
+	@-docker rm -f $(APP_NAME) 2>/dev/null; true
+	docker run --rm --name $(APP_NAME) -p $(PORT):3000 -e NUXT_UPSUN_API_TOKEN=$(NUXT_UPSUN_API_TOKEN) $(IMAGE):web
+
 # ── Electron (Docker) ────────────────────────
 
 .PHONY: dist-linux dist-windows dist-all docker-build clean

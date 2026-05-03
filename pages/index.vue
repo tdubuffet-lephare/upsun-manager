@@ -1,5 +1,5 @@
 <template>
-  <div class="px-6 lg:px-8 py-8 max-w-[1400px]">
+  <div class="px-6 lg:px-8 py-8 w-full">
     <!-- Header -->
     <div class="flex items-center justify-between mb-8 animate-in">
       <div>
@@ -87,6 +87,25 @@
       <div class="flex flex-wrap items-center gap-3 mb-6 animate-in delay-2">
         <div class="flex items-center gap-0.5 bg-surface border border-border rounded-lg p-0.5">
           <button
+            class="px-3 py-1.5 rounded-md font-mono text-[10px] font-medium transition-all"
+            :class="!favoritesOnly ? 'bg-accent/15 text-accent' : 'text-dim hover:text-muted'"
+            @click="favoritesOnly = false"
+          >
+            Tous
+          </button>
+          <button
+            class="px-3 py-1.5 rounded-md font-mono text-[10px] font-medium transition-all inline-flex items-center gap-1"
+            :class="favoritesOnly ? 'bg-accent/15 text-accent' : 'text-dim hover:text-muted'"
+            @click="favoritesOnly = true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" :class="favoritesOnly ? 'text-warning' : ''" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+            Favoris
+          </button>
+        </div>
+        <div class="flex items-center gap-0.5 bg-surface border border-border rounded-lg p-0.5">
+          <button
             v-for="f in filters"
             :key="f.key"
             class="px-3 py-1.5 rounded-md font-mono text-[10px] font-medium transition-all"
@@ -159,15 +178,128 @@
       </div>
     </template>
 
-    <!-- No projects -->
-    <div v-else class="flex flex-col items-center py-20 animate-in">
-      <div class="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center mb-5">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
+    <!-- No projects — onboarding -->
+    <div v-else class="max-w-2xl mx-auto py-8 animate-in">
+      <!-- Welcome header -->
+      <div class="flex flex-col items-center text-center mb-10">
+        <div class="relative mb-5">
+          <div class="absolute inset-0 rounded-3xl bg-accent/30 blur-2xl opacity-40" />
+          <img src="/logo.svg" alt="Upsun Manager" class="relative w-16 h-16 rounded-2xl shadow-lg shadow-accent/10" />
+        </div>
+        <h2 class="text-2xl font-semibold text-text/90 tracking-tight">
+          Bienvenue sur <span class="text-accent">Upsun Manager</span>
+        </h2>
+        <p class="text-[13px] text-muted mt-2 max-w-md">
+          Aucun projet n'est encore visible. Voici comment commencer en quelques étapes.
+        </p>
       </div>
-      <p class="text-[15px] text-muted font-medium">Aucun projet trouvé</p>
-      <p class="font-mono text-[11px] text-dim mt-1">Vérifiez votre token API dans le fichier .env</p>
+
+      <!-- Steps -->
+      <div class="card p-6 mb-5">
+        <div class="space-y-5">
+          <div class="flex gap-4">
+            <div class="shrink-0 w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
+              <span class="font-mono text-[11px] font-semibold text-accent tabular-nums">1</span>
+            </div>
+            <div class="flex-1 pt-0.5">
+              <p class="text-[13px] text-text/85 font-medium">Vérifiez votre token API</p>
+              <p class="text-[12px] text-muted mt-1 leading-relaxed">
+                Si vous n'avez pas encore configuré de token Upsun, ouvrez la page de configuration pour le saisir.
+              </p>
+              <NuxtLink
+                to="/setup"
+                class="inline-flex items-center gap-1.5 mt-2 font-mono text-[11px] text-accent hover:text-accent-hover transition-colors"
+              >
+                Ouvrir la configuration du token
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="h-px bg-border/40 -mx-6" />
+
+          <div class="flex gap-4">
+            <div class="shrink-0 w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
+              <span class="font-mono text-[11px] font-semibold text-accent tabular-nums">2</span>
+            </div>
+            <div class="flex-1 pt-0.5">
+              <p class="text-[13px] text-text/85 font-medium">Créez un projet sur Upsun</p>
+              <p class="text-[12px] text-muted mt-1 leading-relaxed">
+                Les projets sont créés depuis la console Upsun. Connectez votre dépôt Git puis revenez ici.
+              </p>
+              <a
+                href="https://console.upsun.com/"
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-1.5 mt-2 font-mono text-[11px] text-accent hover:text-accent-hover transition-colors"
+              >
+                Ouvrir la console Upsun
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="h-px bg-border/40 -mx-6" />
+
+          <div class="flex gap-4">
+            <div class="shrink-0 w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
+              <span class="font-mono text-[11px] font-semibold text-accent tabular-nums">3</span>
+            </div>
+            <div class="flex-1 pt-0.5">
+              <p class="text-[13px] text-text/85 font-medium">Rafraîchissez ce tableau de bord</p>
+              <p class="text-[12px] text-muted mt-1 leading-relaxed">
+                Une fois votre premier projet créé, il apparaîtra ici avec ses environnements et ses ressources.
+              </p>
+              <button
+                class="btn-primary inline-flex items-center gap-1.5 px-3 py-1.5 mt-2 text-[11px]"
+                :class="{ 'opacity-60 pointer-events-none': dashboardStore.loading }"
+                @click="onRefresh"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3 w-3"
+                  :class="{ 'animate-spin': dashboardStore.loading }"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Rafraîchir maintenant
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Helpful resources -->
+      <div class="flex items-center justify-center gap-4 mt-6 flex-wrap">
+        <a
+          href="https://docs.upsun.com/"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-1.5 font-mono text-[11px] text-dim hover:text-muted transition-colors"
+        >
+          Documentation Upsun
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+        <span class="text-dim/30">·</span>
+        <a
+          href="https://github.com/tdubuffet-lephare/upsun-manager"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-1.5 font-mono text-[11px] text-dim hover:text-muted transition-colors"
+        >
+          Code source
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -177,9 +309,15 @@ import type { UpsunEnvironment } from '~/types/environment'
 
 const dashboardStore = useDashboardStore()
 const projectsStore = useProjectsStore()
+const orgTheme = useOrgTheme()
+const { isFavorite } = useFavorites()
+
+// On the dashboard, multiple orgs are visible — reset to the default theme.
+orgTheme.reset()
 
 const statusFilter = ref<'all' | 'active' | 'paused' | 'inactive' | 'busy'>('all')
 const searchQuery = ref('')
+const favoritesOnly = ref(false)
 
 const filters = [
   { key: 'all' as const, label: 'Tous' },
@@ -201,6 +339,7 @@ const filteredGroups = computed<ProjectGroup[]>(() => {
   const query = searchQuery.value.toLowerCase().trim()
 
   return projectsStore.allProjects
+    .filter(project => !favoritesOnly.value || isFavorite(project.id))
     .map(project => {
       const envs = dashboardStore.getProjectEnvs(project.id)
       const filtered = envs.filter(env => {
@@ -234,6 +373,8 @@ async function onRefresh() {
 }
 
 onMounted(async () => {
+  // Defensive: also reset on remount in case theme survived from a previous project view
+  orgTheme.reset()
   await dashboardStore.loadAll()
   dashboardStore.loadMetrics()
 })

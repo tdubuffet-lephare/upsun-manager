@@ -16,6 +16,27 @@
       </button>
     </div>
 
+    <div v-if="certSummary.total > 0" class="flex items-center gap-3 mb-4">
+      <span
+        v-if="certSummary.valid > 0"
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-[10px] font-medium bg-success/10 text-success"
+      >
+        {{ certSummary.valid }} certificat{{ certSummary.valid > 1 ? 's' : '' }} OK
+      </span>
+      <span
+        v-if="certSummary.expiringSoon > 0"
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-[10px] font-medium bg-warning/10 text-warning"
+      >
+        {{ certSummary.expiringSoon }} expire{{ certSummary.expiringSoon > 1 ? 'nt' : '' }} bientot
+      </span>
+      <span
+        v-if="certSummary.expired > 0"
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono text-[10px] font-medium bg-danger/10 text-danger"
+      >
+        {{ certSummary.expired }} expiré{{ certSummary.expired > 1 ? 's' : '' }}
+      </span>
+    </div>
+
     <LoadingState v-if="store.loading" message="chargement des domaines..." />
     <ErrorState v-else-if="store.error" :message="store.error" />
     <EmptyState v-else-if="!store.domains.length" message="aucun domaine configuré" />
@@ -71,6 +92,27 @@ const { selectedEnvId } = useEnvironmentSelection(toRef(props, 'environments'))
 const showAdd = ref(false)
 const showDeleteConfirm = ref(false)
 const deletingDomain = ref<UpsunDomain | null>(null)
+
+const certSummary = computed(() => {
+  const domainsWithSsl = store.domains.filter(d => d.ssl?.has_certificate)
+  const now = new Date()
+  let valid = 0
+  let expiringSoon = 0
+  let expired = 0
+
+  for (const domain of domainsWithSsl) {
+    if (!domain.ssl?.expires_on) {
+      valid++
+      continue
+    }
+    const daysLeft = Math.ceil((new Date(domain.ssl.expires_on).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    if (daysLeft < 0) expired++
+    else if (daysLeft <= 30) expiringSoon++
+    else valid++
+  }
+
+  return { total: domainsWithSsl.length, valid, expiringSoon, expired }
+})
 
 watch(selectedEnvId, (envId) => {
   if (envId) store.fetchDomains(props.projectId, envId)

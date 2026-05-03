@@ -12,10 +12,15 @@
       </span>
     </td>
     <td class="px-5 py-3">
-      <div v-if="domain.ssl?.has_certificate" class="inline-flex items-center gap-1.5">
-        <div class="w-1.5 h-1.5 rounded-full" :class="sslDotClass" />
-        <span class="font-mono text-[10px] font-medium" :class="sslTextClass">
-          {{ sslLabel }}
+      <div v-if="domain.ssl?.has_certificate" class="flex flex-col gap-0.5">
+        <div class="inline-flex items-center gap-1.5">
+          <div class="w-1.5 h-1.5 rounded-full" :class="sslDotClass" />
+          <span class="font-mono text-[10px] font-medium" :class="sslTextClass">
+            {{ sslLabel }}
+          </span>
+        </div>
+        <span v-if="expiryInfo" class="font-mono text-[9px]" :class="expiryInfo.colorClass">
+          {{ expiryInfo.label }}
         </span>
       </div>
       <span v-else class="font-mono text-[10px] text-dim">aucun</span>
@@ -60,5 +65,24 @@ const sslLabel = computed(() => {
   if (state === 'valid') return `SSL valide — ${props.domain.ssl.issuer}`
   if (state === 'provisioning') return 'provisionnement...'
   return 'expiré'
+})
+
+const expiryInfo = computed(() => {
+  if (!props.domain.ssl?.expires_on) return null
+  const now = new Date()
+  const expiresOn = new Date(props.domain.ssl.expires_on)
+  const diffMs = expiresOn.getTime() - now.getTime()
+  const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (daysLeft < 0) {
+    return { label: 'Expiré', colorClass: 'text-danger' }
+  }
+  if (daysLeft < 7) {
+    return { label: `Expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`, colorClass: 'text-danger' }
+  }
+  if (daysLeft <= 30) {
+    return { label: `Expire dans ${daysLeft} jours`, colorClass: 'text-warning' }
+  }
+  return { label: `Expire dans ${daysLeft} jours`, colorClass: 'text-success' }
 })
 </script>

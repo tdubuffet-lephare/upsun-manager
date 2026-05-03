@@ -1,8 +1,4 @@
-FROM node:20-bookworm AS base
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    dpkg fakeroot rpm libarchive-tools \
-    && rm -rf /var/lib/apt/lists/*
+FROM node:20-bookworm-slim AS base
 
 WORKDIR /app
 
@@ -11,8 +7,19 @@ RUN npm ci
 
 COPY . .
 
-# ── Stage: Nuxt + Electron TypeScript build ──
+# ── Stage: Web build (Nuxt SPA + Nitro) ──
+FROM base AS web
+
+RUN npx nuxt build
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]
+
+# ── Stage: Electron compile ──
 FROM base AS compile
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    dpkg fakeroot rpm libarchive-tools \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN ELECTRON=true npx nuxt build
 RUN npx tsc -p electron/tsconfig.json
