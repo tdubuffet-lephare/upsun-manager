@@ -1,0 +1,37 @@
+appId: com.lephare.upsun-manager
+productName: Upsun Manager
+directories:
+  output: release
+  buildResources: electron/resources
+
+files:
+  - dist-electron/**/*
+  - package.json
+
+extraResources:
+  - from: .output
+    to: output
+    filter:
+      - "**/*"
+
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.developer-tools
+
+win:
+  target:
+    - nsis
+    - portable
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development
+  maintainer: Thibault Dubuffet <thibault.dubuffet@lephare.com>
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
