@@ -86,10 +86,37 @@ Vue d'ensemble de tous vos projets et environnements avec :
 | Desktop | Electron (optionnel) |
 | Build desktop | Docker + Makefile |
 
-## Installation
+## Téléchargement
+
+Les binaires pré-compilés sont disponibles sur la page [Releases](https://github.com/tdubuffet-lephare/upsun-manager/releases).
+
+### Linux
+
+| Format | Distributions cibles | Installation |
+|---|---|---|
+| `.AppImage` | Toutes (universel) | `chmod +x Upsun-Manager-*.AppImage && ./Upsun-Manager-*.AppImage` |
+| `.deb` | Debian, Ubuntu, Mint, Pop!_OS | `sudo dpkg -i Upsun-Manager-*.deb` |
+| `.rpm` | Fedora, RHEL, Rocky, openSUSE | `sudo rpm -i Upsun-Manager-*.rpm` |
+
+### Windows
+
+1. Télécharger `Upsun-Manager-Setup-*.exe` (installeur) ou `Upsun-Manager-*-portable.exe` (sans installation).
+2. Au premier lancement, Windows SmartScreen affiche un avertissement : cliquer **Plus d'infos** puis **Exécuter quand même**.
+3. L'exécutable n'est pas signé par un certificat EV payant — l'avertissement est normal.
+
+### macOS
+
+1. Télécharger `Upsun-Manager-*.dmg` et glisser l'app dans le dossier Applications.
+2. Au premier lancement : **clic-droit sur l'icône > Ouvrir** (au lieu d'un double-clic).
+3. Confirmer dans la boîte de dialogue Gatekeeper.
+4. L'app n'est pas notarisée Apple — le clic-droit est nécessaire uniquement la première fois.
+
+L'auto-update est intégré : à chaque démarrage, l'app vérifie si une nouvelle version existe et la télécharge en arrière-plan.
+
+## Installation depuis les sources
 
 ```bash
-git clone https://github.com/tdubuffet/upsun-manager.git
+git clone https://github.com/tdubuffet-lephare/upsun-manager.git
 cd upsun-manager
 npm install
 ```
@@ -130,10 +157,10 @@ npm run electron:pack
 npm run electron:dist
 ```
 
-### Docker (compilation multi-plateforme)
+### Docker (compilation multi-plateforme locale)
 
 ```bash
-# Linux (AppImage + deb)
+# Linux (AppImage + deb + rpm)
 make dist-linux
 
 # Windows (via Wine)
@@ -142,6 +169,20 @@ make dist-windows
 # Les deux
 make dist-all
 ```
+
+### Release multi-plateforme automatisée
+
+Le workflow GitHub Actions `.github/workflows/release.yml` build automatiquement Linux, Windows et macOS en parallèle quand un tag `v*.*.*` est poussé :
+
+```bash
+npm version 1.1.0 --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "chore: release v1.1.0"
+git tag v1.1.0
+git push origin main --tags
+```
+
+Les artifacts sont publiés automatiquement sur la page Releases du repo.
 
 ## Architecture
 

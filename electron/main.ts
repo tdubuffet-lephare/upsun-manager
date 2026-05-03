@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Notification } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { join } from 'node:path'
 import { getToken, setToken, hasToken, clearToken } from './token-store'
 import { startNitroServer, stopServer } from './nitro-server'
@@ -48,6 +49,49 @@ function registerIpcHandlers() {
   })
 }
 
+function setupAutoUpdater() {
+  if (!app.isPackaged) return
+
+  autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('[updater] checking for update...')
+  })
+
+  autoUpdater.on('update-available', (info) => {
+    console.log(`[updater] update available: v${info.version}`)
+    new Notification({
+      title: 'Mise à jour disponible',
+      body: `Upsun Manager v${info.version} est en cours de téléchargement.`,
+    }).show()
+  })
+
+  autoUpdater.on('update-not-available', () => {
+    console.log('[updater] no update available')
+  })
+
+  autoUpdater.on('download-progress', (progress) => {
+    console.log(`[updater] download progress: ${progress.percent.toFixed(1)}%`)
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log(`[updater] update downloaded: v${info.version}`)
+    new Notification({
+      title: 'Mise à jour prête',
+      body: `Upsun Manager v${info.version} sera installée au prochain démarrage.`,
+    }).show()
+  })
+
+  autoUpdater.on('error', (error) => {
+    console.error('[updater] error:', error)
+  })
+
+  autoUpdater.checkForUpdatesAndNotify().catch((error) => {
+    console.error('[updater] initial check failed:', error)
+  })
+}
+
 app.whenReady().then(async () => {
   registerIpcHandlers()
 
@@ -61,6 +105,7 @@ app.whenReady().then(async () => {
   }
 
   createWindow()
+  setupAutoUpdater()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
