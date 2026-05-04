@@ -34,7 +34,8 @@ linux:
   maintainer: Thibault Dubuffet <thibault.dubuffet@lephare.com>
   icon: electron/resources/icons
   desktop:
-    StartupWMClass: Upsun Manager
+    entry:
+      StartupWMClass: Upsun Manager
 
 nsis:
   oneClick: false
