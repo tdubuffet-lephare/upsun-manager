@@ -32,6 +32,9 @@ linux:
     - rpm
   category: Development
   maintainer: Thibault Dubuffet <thibault.dubuffet@lephare.com>
+  icon: electron/resources/icons
+  desktop:
+    StartupWMClass: Upsun Manager
 
 nsis:
   oneClick: false
