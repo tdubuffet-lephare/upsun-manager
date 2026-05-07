@@ -1,253 +1,138 @@
-import type { AutoscalingServiceSettings, AutoscalingRecommendation, AutoscalingPresetKey, ScalingEvent } from '~/types/autoscaling'
-import { AUTOSCALING_PRESETS } from '~/types/autoscaling'
-import { parseMetricsResponse } from '~/utils/metrics'
+import type {
+  AutoscalingSettings,
+  AutoscalingConfig,
+  PartialAutoscalingPatch,
+} from '~/types/autoscaling'
+import { makeBalancedConfig } from '~/types/autoscaling'
 import { extractErrorMessage } from '~/utils/error'
 
+const LOG_PREFIX = '[autoscaling]'
+
 export const useAutoscalingStore = defineStore('autoscaling', () => {
-  const settings = ref<Record<string, AutoscalingServiceSettings>>({})
+  const settings = ref<AutoscalingSettings | null>(null)
   const loading = ref(false)
   const saving = ref(false)
-  const analyzing = ref(false)
   const error = ref<string | null>(null)
-  const recommendations = ref<AutoscalingRecommendation[]>([])
-  const logs = ref<ScalingEvent[]>([])
-  const engineRunning = ref(false)
 
   const { show } = useToast()
 
-  async function fetchSettings(projectId: string, environmentId: string) {
+  async function fetchSettings(projectId: string, environmentId: string): Promise<void> {
     loading.value = true
     error.value = null
-    recommendations.value = []
     try {
-      const data = await $fetch<{ services: Record<string, AutoscalingServiceSettings> }>(
+      settings.value = await $fetch<AutoscalingSettings>(
         `/api/autoscaling/${projectId}`,
         { params: { environmentId } },
       )
-      settings.value = data.services ?? {}
-    } catch (e: unknown) {
-      error.value = extractErrorMessage(e, 'Impossible de charger la configuration autoscaling')
-      settings.value = {}
+    } catch (err) {
+      console.error(`${LOG_PREFIX} fetchSettings failed:`, err)
+      error.value = extractErrorMessage(err, 'Impossible de charger l\'autoscaling Upsun')
+      settings.value = null
     } finally {
       loading.value = false
     }
   }
 
-  async function fetchLogs(projectId: string, environmentId: string) {
-    try {
-      const data = await $fetch<{ logs: ScalingEvent[]; engine_running: boolean }>(
-        `/api/autoscaling-logs/${projectId}`,
-        { params: { environmentId } },
-      )
-      logs.value = data.logs ?? []
-      engineRunning.value = data.engine_running
-    } catch {
-      logs.value = []
-    }
-  }
-
-  async function updateServiceSettings(
+  async function applyPatch(
     projectId: string,
     environmentId: string,
-    service: string,
-    serviceSettings: AutoscalingServiceSettings,
-  ) {
+    patch: PartialAutoscalingPatch,
+    successMessage?: string,
+  ): Promise<boolean> {
     saving.value = true
     try {
-      const data = await $fetch<{ services: Record<string, AutoscalingServiceSettings> }>(
+      settings.value = await $fetch<AutoscalingSettings>(
         `/api/autoscaling/${projectId}`,
-        {
-          method: 'PATCH',
-          body: { environmentId, service, settings: serviceSettings },
-        },
+        { method: 'PATCH', body: { environmentId, patch } },
       )
-      settings.value = data.services ?? { ...settings.value, [service]: serviceSettings }
-      show('Configuration autoscaling mise à jour', 'success')
-    } catch (e: unknown) {
-      show(extractErrorMessage(e, 'Erreur lors de la sauvegarde'), 'error')
+      if (successMessage) show(successMessage, 'success')
+      return true
+    } catch (err) {
+      console.error(`${LOG_PREFIX} applyPatch failed:`, err)
+      show(extractErrorMessage(err, 'Échec de la mise à jour'), 'error')
+      return false
     } finally {
       saving.value = false
     }
   }
 
-  function getPreset(key: AutoscalingPresetKey): AutoscalingServiceSettings {
-    return { enabled: true, ...AUTOSCALING_PRESETS[key].settings }
-  }
-
-  function getDefaultSettings(): AutoscalingServiceSettings {
-    return {
-      enabled: false,
-      min_instances: 1,
-      max_instances: 4,
-      cpu: { enabled: true, threshold_up: 70, threshold_down: 30 },
-      memory: { enabled: false, threshold_up: 80, threshold_down: 25 },
-      disk: { enabled: false, threshold_up: 85, increment_gb: 2, max_disk_gb: 100 },
-      evaluation_period: 300,
-      cooldown_period: 600,
-    }
-  }
-
-  function buildPercentSeries(timeSeries: ReturnType<typeof parseMetricsResponse>['timeSeries']) {
-    const result: Record<string, { cpu: number[]; memory: number[]; disk: number[] }> = {}
-
-    for (const point of timeSeries) {
-      for (const [name, svc] of Object.entries(point.services)) {
-        if (!result[name]) result[name] = { cpu: [], memory: [], disk: [] }
-        const cpuPct = svc.cpu_limit > 0 ? (svc.cpu_used / svc.cpu_limit) * 100 : 0
-        const memPct = svc.memory_limit > 0 ? (svc.memory_used / svc.memory_limit) * 100 : 0
-        const diskPct = svc.disk_limit > 0 ? (svc.disk_used / svc.disk_limit) * 100 : 0
-        result[name].cpu.push(cpuPct)
-        result[name].memory.push(memPct)
-        if (diskPct > 0) result[name].disk.push(diskPct)
-      }
-    }
-
-    return result
-  }
-
-  async function generateRecommendations(projectId: string, environmentId: string) {
-    analyzing.value = true
-    recommendations.value = []
-    try {
-      const raw = await $fetch(`/api/metrics/${projectId}`, {
-        params: { environmentId, range: '24h' },
-      }).catch(() => null)
-
-      if (!raw) {
-        show('Pas assez de données pour générer des recommandations', 'info')
-        return
-      }
-
-      const { timeSeries } = parseMetricsResponse(raw as Parameters<typeof parseMetricsResponse>[0])
-      if (!timeSeries.length) {
-        show('Pas assez de données pour générer des recommandations', 'info')
-        return
-      }
-
-      const recs: AutoscalingRecommendation[] = []
-      const serviceTimeSeries = buildPercentSeries(timeSeries)
-
-      for (const [service, series] of Object.entries(serviceTimeSeries)) {
-        const svcSettings = settings.value[service] ?? getDefaultSettings()
-        analyzeMetric(recs, service, 'cpu', series.cpu, svcSettings)
-        analyzeMetric(recs, service, 'memory', series.memory, svcSettings)
-        analyzeDisk(recs, service, series.disk, svcSettings)
-      }
-
-      recommendations.value = recs
-      if (!recs.length) {
-        show('Configuration actuelle optimale — aucune recommandation', 'success')
-      }
-    } catch {
-      show('Erreur lors de l\'analyse', 'error')
-    } finally {
-      analyzing.value = false
-    }
-  }
-
-  function analyzeMetric(
-    recs: AutoscalingRecommendation[],
+  function setServiceConfig(
+    projectId: string,
+    environmentId: string,
     service: string,
-    metric: 'cpu' | 'memory',
-    values: number[],
-    svcSettings: AutoscalingServiceSettings,
-  ) {
-    if (!values.length || !values.some(v => v > 0)) return
-    const sorted = [...values].sort((a, b) => a - b)
-    const avg = values.reduce((s, v) => s + v, 0) / values.length
-    const p95 = sorted[Math.floor(sorted.length * 0.95)]
-    const max = sorted[sorted.length - 1]
-    const stdDev = Math.sqrt(values.reduce((s, v) => s + (v - avg) ** 2, 0) / values.length)
-    const metricConfig = svcSettings[metric]
-    const metricLabel = metric === 'cpu' ? 'CPU' : 'RAM'
-
-    if (p95 > metricConfig.threshold_up - 5) {
-      recs.push({
-        service, metric, severity: 'warning',
-        message: `${metricLabel} p95 à ${p95.toFixed(0)}% — seuil scale-up (${metricConfig.threshold_up}%) trop proche`,
-        suggested_value: Math.max(50, Math.floor(p95 - 15)),
-        current_value: metricConfig.threshold_up,
-        field: `${metric}.threshold_up`,
-      })
-    }
-
-    if (max < 30) {
-      recs.push({
-        service, metric, severity: 'info',
-        message: `${metricLabel} max à ${max.toFixed(0)}% sur 24h — réduire max_instances possible`,
-        suggested_value: Math.max(1, svcSettings.max_instances - 1),
-        current_value: svcSettings.max_instances,
-        field: 'max_instances',
-      })
-    }
-
-    if (avg < 15 && max < 40 && metricConfig.enabled) {
-      recs.push({
-        service, metric, severity: 'info',
-        message: `${metricLabel} très stable (moy ${avg.toFixed(0)}%, max ${max.toFixed(0)}%) — autoscaling ${metricLabel} peut être désactivé`,
-        field: `${metric}.enabled`,
-      })
-    }
-
-    if (stdDev > avg * 0.3 && avg > 20) {
-      recs.push({
-        service, metric, severity: 'warning',
-        message: `${metricLabel} très variable (σ=${stdDev.toFixed(0)}%) — réduire la période d'évaluation`,
-        suggested_value: Math.max(60, Math.floor(svcSettings.evaluation_period / 2)),
-        current_value: svcSettings.evaluation_period,
-        field: 'evaluation_period',
-      })
-    }
+    config: AutoscalingConfig,
+    successMessage?: string,
+  ): Promise<boolean> {
+    return applyPatch(
+      projectId,
+      environmentId,
+      { services: { [service]: config } },
+      successMessage ?? `Configuration de "${service}" sauvegardée`,
+    )
   }
 
-  function analyzeDisk(
-    recs: AutoscalingRecommendation[],
+  function removeServiceConfig(
+    projectId: string,
+    environmentId: string,
     service: string,
-    values: number[],
-    svcSettings: AutoscalingServiceSettings,
-  ) {
-    if (!values.length || !values.some(v => v > 0)) return
-    const avg = values.reduce((s, v) => s + v, 0) / values.length
-    const max = Math.max(...values)
-    const diskConfig = svcSettings.disk
+  ): Promise<boolean> {
+    return applyPatch(
+      projectId,
+      environmentId,
+      { services: { [service]: null as unknown as AutoscalingConfig } },
+      `Autoscaling désactivé pour "${service}"`,
+    )
+  }
 
-    if (max > 90) {
-      recs.push({
-        service, metric: 'disk', severity: 'critical',
-        message: `Disque max à ${max.toFixed(0)}% — risque de saturation imminent`,
-        field: 'disk.enabled',
-      })
-    } else if (avg > 75 && !diskConfig?.enabled) {
-      recs.push({
-        service, metric: 'disk', severity: 'warning',
-        message: `Disque moy à ${avg.toFixed(0)}% — activer l'autoscaling disque recommandé`,
-        field: 'disk.enabled',
-      })
+  async function enableForServices(
+    projectId: string,
+    environmentId: string,
+    serviceNames: ReadonlyArray<string>,
+  ): Promise<boolean> {
+    if (!serviceNames.length) {
+      show('Aucun service à activer sur cet environnement', 'info')
+      return false
     }
+    const services: Record<string, AutoscalingConfig> = {}
+    for (const name of serviceNames) {
+      services[name] = makeBalancedConfig()
+    }
+    return applyPatch(
+      projectId,
+      environmentId,
+      { services },
+      `Autoscaling activé sur ${serviceNames.length} service${serviceNames.length > 1 ? 's' : ''}`,
+    )
+  }
 
-    if (avg < 20 && max < 30) {
-      recs.push({
-        service, metric: 'disk', severity: 'info',
-        message: `Disque très peu utilisé (moy ${avg.toFixed(0)}%) — espace surdimensionné`,
-        field: 'disk.max_disk_gb',
-      })
-    }
+  function configForService(service: string): AutoscalingConfig | null {
+    if (!settings.value) return null
+    return settings.value.services[service] ?? null
+  }
+
+  function hasServiceConfig(service: string): boolean {
+    return Boolean(settings.value?.services[service])
+  }
+
+  function reset(): void {
+    settings.value = null
+    error.value = null
+    loading.value = false
+    saving.value = false
   }
 
   return {
     settings,
     loading,
     saving,
-    analyzing,
     error,
-    recommendations,
-    logs,
-    engineRunning,
     fetchSettings,
-    fetchLogs,
-    updateServiceSettings,
-    getPreset,
-    getDefaultSettings,
-    generateRecommendations,
+    applyPatch,
+    enableForServices,
+    setServiceConfig,
+    removeServiceConfig,
+    configForService,
+    hasServiceConfig,
+    reset,
   }
 })

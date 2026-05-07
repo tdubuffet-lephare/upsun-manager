@@ -1,8 +1,11 @@
-export default defineEventHandler(async (event) => {
-  const projectId = getRouterParam(event, 'projectId')!
-  const { environmentId } = getQuery(event)
-  const key = `autoscaling:${projectId}:${environmentId}`
+import type { AutoscalingSettings } from '~/types/autoscaling'
 
-  const stored = await useStorage('data').getItem<Record<string, any>>(key)
-  return { services: stored ?? {} }
+export default defineEventHandler(async (event): Promise<AutoscalingSettings> => {
+  const projectId = requireRouterParam(event, 'projectId')
+  const environmentId = requireQueryString(event, 'environmentId')
+  const encoded = encodeURIComponent(environmentId)
+
+  return await upsunFetch<AutoscalingSettings>(
+    `/projects/${projectId}/environments/${encoded}/autoscaling/settings`,
+  )
 })

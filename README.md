@@ -85,12 +85,15 @@ Diff côté-à-côte de deux environnements sur :
 
 ![Sauvegardes](docs/screenshots/readme-backups.png)
 
-#### Autoscaling
-Moteur d'autoscaling intégré (Upsun n'a pas d'API native) :
-- Configuration par service : CPU, mémoire, disque
-- Presets rapides : Conservateur, Équilibré, Agressif
-- Recommandations basées sur 24h de données
-- Historique des actions de scaling
+#### Autoscaling natif Upsun
+Frontend pour l'autoscaling natif d'Upsun (`/autoscaling/settings`). L'app pilote la configuration ; **Upsun fait l'évaluation et les actions côté infra**, en continu, même quand l'app n'est pas ouverte :
+
+- Configuration par service : 4 déclencheurs (CPU, mémoire, **CPU pressure**, **mémoire pressure** PSI Linux)
+- Pour chaque déclencheur : seuils up/down avec durées séparées + visualisation des seuils sur barre 0-100 %
+- Bornes par service : `instances` min/max, `resources.cpu` min/max, `resources.memory` min/max
+- Cooldowns up/down + facteurs de scaling configurables
+- Activation en 1 clic sur tous les services avec preset équilibré, ou config par service
+- Pas de moteur custom à maintenir : Upsun ajuste à chaud, sans redéploiement complet
 
 ![Autoscaling](docs/screenshots/readme-autoscaling.png)
 
@@ -129,7 +132,7 @@ Si aucun projet n'est encore visible (token configuré mais aucun projet créé 
 
 - **Palette de commandes ⌘K** : recherche fuzzy sur tous les panels et environnements du projet courant
 - **Pattern signature génératif** : chaque organisation reçoit un motif unique en arrière-plan (dérivé de son ID)
-- **Auto-update** : les nouvelles versions sont téléchargées automatiquement en arrière-plan
+- **Vérification de version automatique** : l'app vérifie GitHub Releases au démarrage et toutes les heures. En desktop, `electron-updater` télécharge la mise à jour en arrière-plan ; en web, un banner discret en bas d'écran propose le téléchargement direct du binaire correspondant à l'OS détecté.
 - **Skip-link & focus-visible** : navigation clavier soignée, conforme aux bonnes pratiques d'accessibilité
 
 ## Stack technique
@@ -263,6 +266,7 @@ composables/
   useOrgPattern.ts              # Génération déterministe par hash d'org
   useOrgTheme.ts                # Application des CSS variables d'accent
   useProjectSections.ts         # Définition de la nav projet
+  useUpdateChecker.ts           # Vérification GitHub Releases + version locale
   useFavorites.ts
   ...
 stores/                         # 15 Pinia stores (composition API)
@@ -288,13 +292,12 @@ server/
     upsun-auth.ts               # OAuth2 token exchange
     upsun-client.ts             # Client HTTP avec retry 401
     upsun-metrics.ts            # Service typé d'extraction de métriques
-    log-parser.ts               # Parser de logs Upsun
+    log-parser.ts               # Parser logs Upsun (JSONL streaming)
     notification-engine.ts      # Évaluation périodique des alertes (60s)
-    autoscaling-engine.ts       # Moteur d'autoscaling (60s)
     storage-keys.ts             # Clés Nitro storage centralisées
     validation.ts               # Validation des inputs API
   plugins/
-    autoscaling.ts / notifications.ts
+    notifications.ts            # Démarrage du moteur d'alertes
 electron/                       # Process Electron
   main.ts                       # Lifecycle + IPC + auto-updater
   preload.ts                    # Pont vers le renderer

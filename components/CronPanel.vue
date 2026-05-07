@@ -110,8 +110,8 @@ async function loadCronActivities(envId: string): Promise<void> {
   error.value = null
   try {
     const data = await $fetch<UpsunActivity[]>(
-      `/api/activities/by-project/${props.projectId}`,
-      { params: { type: 'environment.cron', count: CRON_FETCH_LIMIT, environment: envId } },
+      `/api/activities/by-environment/${props.projectId}/${encodeURIComponent(envId)}`,
+      { params: { type: 'environment.cron', count: CRON_FETCH_LIMIT } },
     )
     cronActivities.value = Array.isArray(data) ? data : []
   } catch (err) {

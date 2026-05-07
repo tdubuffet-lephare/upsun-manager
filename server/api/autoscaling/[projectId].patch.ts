@@ -1,18 +1,29 @@
-export default defineEventHandler(async (event) => {
-  const projectId = getRouterParam(event, 'projectId')!
-  const body = await readBody(event)
-  const { environmentId, service, settings } = body
+import type { AutoscalingSettings, PartialAutoscalingPatch } from '~/types/autoscaling'
 
-  if (!environmentId || !service || !settings) {
-    throw createError({ statusCode: 400, statusMessage: 'environmentId, service et settings requis' })
+interface PatchBody {
+  environmentId: string
+  patch: PartialAutoscalingPatch
+}
+
+function validate(input: unknown): PatchBody {
+  if (!input || typeof input !== 'object') throw new Error('Body required')
+  const { environmentId, patch } = input as Record<string, unknown>
+  if (typeof environmentId !== 'string' || !environmentId.trim()) {
+    throw new Error('environmentId is required')
   }
+  if (!patch || typeof patch !== 'object') {
+    throw new Error('patch is required')
+  }
+  return { environmentId, patch: patch as PartialAutoscalingPatch }
+}
 
-  const key = `autoscaling:${projectId}:${environmentId}`
-  const storage = useStorage('data')
+export default defineEventHandler(async (event): Promise<AutoscalingSettings> => {
+  const projectId = requireRouterParam(event, 'projectId')
+  const { environmentId, patch } = await readJsonBody(event, validate)
+  const encoded = encodeURIComponent(environmentId)
 
-  const existing = await storage.getItem<Record<string, any>>(key) ?? {}
-  existing[service] = settings
-  await storage.setItem(key, existing)
-
-  return { ok: true, services: existing }
+  return await upsunFetch<AutoscalingSettings>(
+    `/projects/${projectId}/environments/${encoded}/autoscaling/settings`,
+    { method: 'PATCH', body: patch },
+  )
 })

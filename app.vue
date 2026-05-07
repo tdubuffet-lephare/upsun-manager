@@ -17,6 +17,7 @@
       </main>
     </template>
     <ToastContainer />
+    <UpdateBanner />
   </div>
 </template>
 

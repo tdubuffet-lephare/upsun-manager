@@ -26,6 +26,10 @@ export default defineNuxtConfig({
     upsunApiToken: '',
     upsunApiBaseUrl: 'https://api.upsun.com',
     upsunAuthUrl: 'https://auth.api.platform.sh/oauth2/token',
+    public: {
+      appVersion: process.env.npm_package_version || '0.0.0',
+      githubRepo: 'tdubuffet-lephare/upsun-manager',
+    },
   },
 
   nitro: {

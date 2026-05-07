@@ -1,92 +1,140 @@
-export interface AutoscalingMetricConfig {
-  enabled: boolean
-  threshold_up: number
-  threshold_down: number
-}
-
-export interface AutoscalingDiskConfig {
-  enabled: boolean
-  threshold_up: number
-  increment_gb: number
-  max_disk_gb: number
-}
-
-export interface AutoscalingServiceSettings {
-  enabled: boolean
-  min_instances: number
-  max_instances: number
-  cpu: AutoscalingMetricConfig
-  memory: AutoscalingMetricConfig
-  disk: AutoscalingDiskConfig
-  evaluation_period: number
-  cooldown_period: number
-}
-
-export interface AutoscalingRecommendation {
-  service: string
-  metric: 'cpu' | 'memory' | 'disk'
-  severity: 'info' | 'warning' | 'critical'
-  message: string
-  suggested_value?: number
-  current_value?: number
-  field: string
-}
-
-export interface ScalingEvent {
-  timestamp: number
-  projectId: string
-  environmentId: string
-  service: string
-  action: 'scale_up' | 'scale_down' | 'disk_increase'
-  metric: 'cpu' | 'memory' | 'disk'
-  from_instances: number
-  to_instances: number
-  trigger_value: number
+export interface AutoscalingTriggerSide {
   threshold: number
-  success: boolean
-  error?: string
+  duration: number
+  enabled: boolean
 }
 
-export type AutoscalingPresetKey = 'conservative' | 'balanced' | 'aggressive'
-
-export const AUTOSCALING_PRESETS: Record<AutoscalingPresetKey, { label: string; description: string; settings: Omit<AutoscalingServiceSettings, 'enabled'> }> = {
-  conservative: {
-    label: 'Conservateur',
-    description: 'Seuils élevés, réaction lente — priorité stabilité et coûts',
-    settings: {
-      min_instances: 1,
-      max_instances: 2,
-      cpu: { enabled: true, threshold_up: 85, threshold_down: 40 },
-      memory: { enabled: false, threshold_up: 85, threshold_down: 40 },
-      disk: { enabled: false, threshold_up: 90, increment_gb: 1, max_disk_gb: 50 },
-      evaluation_period: 600,
-      cooldown_period: 900,
-    },
-  },
-  balanced: {
-    label: 'Équilibré',
-    description: 'Bon compromis entre réactivité et coûts',
-    settings: {
-      min_instances: 1,
-      max_instances: 4,
-      cpu: { enabled: true, threshold_up: 70, threshold_down: 30 },
-      memory: { enabled: true, threshold_up: 80, threshold_down: 25 },
-      disk: { enabled: true, threshold_up: 85, increment_gb: 2, max_disk_gb: 100 },
-      evaluation_period: 300,
-      cooldown_period: 600,
-    },
-  },
-  aggressive: {
-    label: 'Agressif',
-    description: 'Seuils bas, réaction rapide — priorité performance',
-    settings: {
-      min_instances: 1,
-      max_instances: 6,
-      cpu: { enabled: true, threshold_up: 60, threshold_down: 25 },
-      memory: { enabled: true, threshold_up: 65, threshold_down: 20 },
-      disk: { enabled: true, threshold_up: 75, increment_gb: 5, max_disk_gb: 200 },
-      evaluation_period: 120,
-      cooldown_period: 300,
-    },
-  },
+export interface AutoscalingTrigger {
+  enabled: boolean
+  down: AutoscalingTriggerSide
+  up: AutoscalingTriggerSide
 }
+
+export interface AutoscalingTriggers {
+  cpu: AutoscalingTrigger
+  memory: AutoscalingTrigger
+  cpu_pressure: AutoscalingTrigger
+  memory_pressure: AutoscalingTrigger
+}
+
+export type TriggerKey = keyof AutoscalingTriggers
+
+export interface AutoscalingInstancesBounds {
+  min: number
+  max: number
+}
+
+export interface AutoscalingResourcesBounds {
+  cpu: { min: number; max: number }
+  memory: { min: number; max: number }
+}
+
+export interface AutoscalingScaleFactor {
+  up: number
+  down: number
+}
+
+export interface AutoscalingScaleCooldown {
+  up: number
+  down: number
+}
+
+export interface AutoscalingConfig {
+  triggers: AutoscalingTriggers
+  instances: AutoscalingInstancesBounds
+  resources: AutoscalingResourcesBounds
+  scale_factor: AutoscalingScaleFactor
+  scale_cooldown: AutoscalingScaleCooldown
+  enabled: boolean
+}
+
+export interface AutoscalingSettings {
+  services: Record<string, AutoscalingConfig>
+  defaults: AutoscalingConfig
+}
+
+export interface PartialAutoscalingPatch {
+  services?: Record<string, Partial<AutoscalingConfig>>
+  defaults?: Partial<AutoscalingConfig>
+}
+
+export const TRIGGER_KEYS: ReadonlyArray<TriggerKey> = ['cpu', 'memory', 'cpu_pressure', 'memory_pressure']
+
+export const TRIGGER_LABELS: Record<TriggerKey, string> = {
+  cpu: 'CPU',
+  memory: 'Mémoire',
+  cpu_pressure: 'CPU pressure',
+  memory_pressure: 'Mémoire pressure',
+}
+
+export const TRIGGER_HINTS: Record<TriggerKey, string> = {
+  cpu: 'Utilisation CPU agrégée',
+  memory: 'Utilisation RAM agrégée',
+  cpu_pressure: 'Indicateur PSI Linux : temps perdu à attendre du CPU',
+  memory_pressure: 'Indicateur PSI Linux : temps perdu à attendre de la mémoire',
+}
+
+export const TRIGGER_ACCENT: Record<TriggerKey, 'accent' | 'success' | 'warning' | 'danger'> = {
+  cpu: 'accent',
+  memory: 'success',
+  cpu_pressure: 'warning',
+  memory_pressure: 'danger',
+}
+
+export function makeBalancedConfig(): AutoscalingConfig {
+  return {
+    enabled: true,
+    triggers: {
+      cpu: {
+        enabled: true,
+        up: { threshold: 75, duration: 300, enabled: true },
+        down: { threshold: 25, duration: 600, enabled: true },
+      },
+      memory: {
+        enabled: true,
+        up: { threshold: 80, duration: 300, enabled: true },
+        down: { threshold: 30, duration: 600, enabled: true },
+      },
+      cpu_pressure: {
+        enabled: false,
+        up: { threshold: 80, duration: 300, enabled: true },
+        down: { threshold: 20, duration: 600, enabled: true },
+      },
+      memory_pressure: {
+        enabled: false,
+        up: { threshold: 80, duration: 300, enabled: true },
+        down: { threshold: 20, duration: 600, enabled: true },
+      },
+    },
+    instances: { min: 1, max: 4 },
+    resources: {
+      cpu: { min: 0.25, max: 4 },
+      memory: { min: 256 * 1024 * 1024, max: 4 * 1024 * 1024 * 1024 },
+    },
+    scale_factor: { up: 1, down: 1 },
+    scale_cooldown: { up: 300, down: 600 },
+  }
+}
+
+export function isConfigEqual(a: AutoscalingConfig | undefined, b: AutoscalingConfig | undefined): boolean {
+  if (!a || !b) return false
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+export const COOLDOWN_OPTIONS: ReadonlyArray<{ value: number; label: string }> = [
+  { value: 60, label: '1 min' },
+  { value: 120, label: '2 min' },
+  { value: 300, label: '5 min' },
+  { value: 600, label: '10 min' },
+  { value: 900, label: '15 min' },
+  { value: 1800, label: '30 min' },
+  { value: 3600, label: '1 h' },
+]
+
+export const DURATION_OPTIONS: ReadonlyArray<{ value: number; label: string }> = [
+  { value: 60, label: '1 min' },
+  { value: 180, label: '3 min' },
+  { value: 300, label: '5 min' },
+  { value: 600, label: '10 min' },
+  { value: 1200, label: '20 min' },
+]

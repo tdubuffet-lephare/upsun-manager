@@ -146,6 +146,11 @@
         <DashboardResourceSection />
       </div>
 
+      <!-- Cost estimate -->
+      <div v-if="costProjects.length" class="mb-8 animate-in delay-3">
+        <CostEstimateWidget :projects="costProjects" />
+      </div>
+
       <!-- Project groups -->
       <div v-for="(group, gi) in filteredGroups" :key="group.projectId" class="mb-6 animate-in" :class="[`delay-${Math.min(gi + 2, 4)}`]">
         <div class="flex items-center gap-3 mb-3">
@@ -311,6 +316,16 @@ const dashboardStore = useDashboardStore()
 const projectsStore = useProjectsStore()
 const orgTheme = useOrgTheme()
 const { isFavorite } = useFavorites()
+
+const costProjects = computed(() =>
+  projectsStore.allProjects
+    .map(project => ({
+      projectId: project.id,
+      title: project.title,
+      summary: dashboardStore.metricsByProject[project.id]?.summary ?? null,
+    }))
+    .filter(p => p.summary !== null),
+)
 
 // On the dashboard, multiple orgs are visible — reset to the default theme.
 orgTheme.reset()

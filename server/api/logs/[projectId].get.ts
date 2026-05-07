@@ -6,10 +6,24 @@ interface UpsunActivity {
   state: string
   result: string | null
   created_at: string
-  log: string
 }
 
-const ACTIVITY_FETCH_COUNT = 30
+const ACTIVITY_FETCH_COUNT = 12
+
+async function fetchActivityLog(projectId: string, activityId: string): Promise<string> {
+  try {
+    const stream = await upsunFetch<string>(
+      `/projects/${projectId}/activities/${activityId}/log`,
+      {
+        headers: { Accept: 'text/plain' },
+        responseType: 'text',
+      },
+    )
+    return formatActivityLogStream(typeof stream === 'string' ? stream : '')
+  } catch {
+    return ''
+  }
+}
 
 export default defineEventHandler(async (event) => {
   const projectId = requireRouterParam(event, 'projectId')
@@ -20,14 +34,19 @@ export default defineEventHandler(async (event) => {
     `/projects/${projectId}/environments/${encoded}/activities?count=${ACTIVITY_FETCH_COUNT}`,
   )
 
-  const entries: LogEntry[] = activities
-    .filter(activity => activity.log && activity.log.trim().length > 0)
-    .flatMap(activity =>
-      activity.log
-        .split('\n')
-        .filter(Boolean)
-        .map(line => toLogEntry(line, activity.type, activity.created_at)),
-    )
+  const logsByActivity = await Promise.all(
+    activities.map(async activity => ({
+      activity,
+      text: await fetchActivityLog(projectId, activity.id),
+    })),
+  )
+
+  const entries: LogEntry[] = logsByActivity.flatMap(({ activity, text }) =>
+    text
+      .split('\n')
+      .filter(Boolean)
+      .map(line => toLogEntry(line, activity.type, activity.created_at)),
+  )
 
   return { entries, count: activities.length }
 })

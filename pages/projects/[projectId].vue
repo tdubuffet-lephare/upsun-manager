@@ -85,7 +85,7 @@
       </div>
 
       <div v-else-if="activeTab === 'activities'">
-        <ActivityPanel :environments="envsStore.environments" @load-more="activitiesStore.loadMore(projectId)" />
+        <ActivityPanel :project-id="projectId" :environments="envsStore.environments" @load-more="activitiesStore.loadMore(projectId)" />
       </div>
 
       <div v-else-if="activeTab === 'variables'">

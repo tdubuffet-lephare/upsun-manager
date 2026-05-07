@@ -41,3 +41,27 @@ export function toLogEntry(line: string, activityType: string, activityDate: str
     raw: line,
   }
 }
+
+interface UpsunLogStreamLine {
+  _id?: number
+  data?: {
+    timestamp?: string
+    message?: string
+  }
+}
+
+export function formatActivityLogStream(stream: string): string {
+  if (!stream) return ''
+  const messages: string[] = []
+  for (const line of stream.split('\n')) {
+    if (!line) continue
+    try {
+      const parsed = JSON.parse(line) as UpsunLogStreamLine
+      const message = parsed?.data?.message
+      if (typeof message === 'string') messages.push(message)
+    } catch {
+      messages.push(line + '\n')
+    }
+  }
+  return messages.join('')
+}

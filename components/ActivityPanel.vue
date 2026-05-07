@@ -69,6 +69,7 @@
         v-for="activity in store.activities"
         :key="activity.id"
         :activity="activity"
+        :project-id="projectId"
       />
 
       <div v-if="store.activities.length >= 20" class="pt-4 border-t border-border mt-2">
@@ -93,6 +94,7 @@ import type { UpsunEnvironment } from '~/types/environment'
 
 defineProps<{
   environments: UpsunEnvironment[]
+  projectId: string
 }>()
 
 const store = useActivitiesStore()
